@@ -52,7 +52,7 @@ const NewPostForm = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [form.watch, slugTransform, form.setValue]);
+  }, [form, form.watch, slugTransform, form.setValue]);
 
   const handlePostSubmit = async (data: z.infer<typeof NewPostSchema>) => {
     console.log(data);
