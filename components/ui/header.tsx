@@ -12,7 +12,11 @@ const Header = () => {
   return (
     <header className="p-4">
       <nav className="flex items-center justify-between">
-        <h3>Medium_Clone</h3>
+        <Link href={"/"}>
+          <Button variant={"ghost"} className="cursor-pointer">
+            Medium
+          </Button>
+        </Link>
 
         <div>
           <ul className="flex items-center">

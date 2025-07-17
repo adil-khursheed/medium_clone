@@ -17,14 +17,32 @@ import ImageUploader from "./ImageUploader";
 import { Input } from "./input";
 import ContentInput from "./content-input";
 import { Button } from "./button";
+import { toast } from "sonner";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useRouter } from "next/navigation";
 
 const NewPostForm = () => {
+  const createPost = useMutation(api.posts.createPost);
+
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof NewPostSchema>>({
     resolver: zodResolver(NewPostSchema),
     defaultValues: {
       title: "",
       slug: "",
       excerpt: "",
+      coverImageId: undefined,
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [],
+          },
+        ],
+      },
     },
   });
 
@@ -55,7 +73,21 @@ const NewPostForm = () => {
   }, [form, form.watch, slugTransform, form.setValue]);
 
   const handlePostSubmit = async (data: z.infer<typeof NewPostSchema>) => {
-    console.log(data);
+    try {
+      console.log(data);
+
+      const postSlug = await createPost({
+        ...data,
+        content: JSON.stringify(data.content),
+      });
+
+      if (!postSlug) throw new Error("Failed to create post!");
+
+      router.push(`/posts/${postSlug}`);
+      toast.success("Post created!");
+    } catch (error) {
+      toast.error(`Error creating post: ${error}`);
+    }
   };
 
   return (
@@ -64,13 +96,18 @@ const NewPostForm = () => {
         onSubmit={form.handleSubmit(handlePostSubmit)}
         className="max-w-2xl w-full mx-auto space-y-5 py-4 px-5">
         <FormField
-          name="coverImageUrl"
+          name="coverImageId"
           control={form.control}
-          render={({}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Cover Image</FormLabel>
               <FormControl>
-                <ImageUploader />
+                <ImageUploader
+                  onImageSelected={(storageId) => {
+                    field.onChange(storageId);
+                  }}
+                  value={field.value}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -133,7 +170,7 @@ const NewPostForm = () => {
               <FormLabel>Content</FormLabel>
               <FormControl>
                 <ContentInput
-                  initialContent={field.value}
+                  defaultContent={field.value}
                   onChange={field.onChange}
                 />
               </FormControl>

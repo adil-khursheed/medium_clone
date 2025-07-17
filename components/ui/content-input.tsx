@@ -24,24 +24,39 @@ import { TextButtons } from "../editor/selectors/text-buttons";
 import { uploadFn } from "../editor/image-upload";
 import { MathSelector } from "../editor/selectors/math-selector";
 import { Separator } from "./separator";
+import { Post } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const extensions = [...defaultExtensions, slashCommand];
 
 const ContentInput = ({
-  initialContent,
+  defaultContent,
   onChange,
+  editable = true,
+  post,
 }: {
-  initialContent: JSONContent;
-  onChange: (value: string) => void;
+  defaultContent?: JSONContent;
+  onChange?: (value: string) => void;
+  post?: Post;
+  editable?: boolean;
 }) => {
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
 
+  const initialContent = post?.content
+    ? JSON.parse(post.content)
+    : defaultContent;
+
+  if (!initialContent) return null;
+
   return (
     <EditorRoot>
       <EditorContent
-        className="min-h-96 rounded-xl p-3 border border-input dark:bg-input/30 bg-transparent"
+        className={cn(
+          "min-h-96 rounded-xl dark:bg-input/30 bg-transparent",
+          editable ? "border border-input p-3" : ""
+        )}
         {...(initialContent && { initialContent })}
         extensions={extensions}
         editorProps={{
@@ -57,7 +72,12 @@ const ContentInput = ({
           },
         }}
         onUpdate={({ editor }) => {
-          onChange(editor.getHTML());
+          if (onChange) {
+            onChange(editor.getHTML());
+          }
+        }}
+        onCreate={({ editor }) => {
+          if (!editable) editor.setEditable(editable);
         }}
         slotAfter={<ImageResizer />}
         immediatelyRender={false}>
